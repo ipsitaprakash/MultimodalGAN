@@ -94,6 +94,11 @@ class Trainer(object):
 				g_loss.backward()
 				self.optimizerG.step()
 
+			if i % 100 == 0:
+			vutils.save_image(real_cpu, '%s/real_samples.png' % args.outf, normalize=True)
+			fake = self.discriminator(fixed_noise)
+			vutils.save_image(fake.detach(), '%s/fake_samples_epoch_%03d.png' % (args.outf, epoch), normalize=True)
+
 			torch.save(self.generator.state_dict(), '%s/netG_epoch_%d.pth' % (args.outf, epoch))
 			torch.save(self.discriminator.state_dict(), '%s/netD_epoch_%d.pth' % (args.outf, epoch))
 			#if (epoch) % 10 == 0:
