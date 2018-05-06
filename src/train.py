@@ -11,31 +11,26 @@ import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutil
-from dataset import Sound2ImageDataset
 from models import Generator,Discriminator
 from torch.utils.data import DataLoader
 
 
 
-
-opt = parser.parse_args()
-
-if torch.cuda.is_available() and not opt.cuda:
-	print("WARNING: You have a CUDA device, so you should probably run with --cuda")
-
 class Trainer(object):
 
-	def __init__(self,args):
+	def __init__(self,dataset,args):
+
 		self.dataset = dataset
 		self.device = args.device
 
-		self.generator = torch.nn.DataParallel(Generator(args.ngpu).to(args.device))
-		self.discriminator = torch.nn.DataParallel(Discriminator(args.ngpu).to(args.device))
+		self.generator = torch.nn.DataParallel(Generator(args).to(args.device))
+		self.discriminator = torch.nn.DataParallel(Discriminator(args).to(args.device))
 
-		self.dataloader = DataLoader()
-
+		self.dataloader = DataLoader(dataset, batch_size=args.batchSize,shuffle=True, num_workers=int(args.workers))
 		self.optimizerD = optim.Adam(self.discriminator.parameters(), lr=args.lr, betas=(args.beta1, 0.999))
 		self.optimizerG = optim.Adam(self.generator.parameters(), lr=args.lr, betas=(args.beta1, 0.999))
+
+		self.ngpu = int(args.ngpu)
 
 		self.criterion = nn.BCELoss()
 
@@ -45,7 +40,9 @@ class Trainer(object):
 		self.discriminator.train()
 
 		for epoch in range(args.nepochs):
-			for i, sample in enumerate(dataloader):
+
+			fixed_noise = torch.randn(args.batchSize, args.nz, 1, 1, device=self.device)
+			for i, sample in enumerate(self.dataloader):
 
 				batch_size = right_images.size(0)
 				right_images = sample['right_images']
@@ -94,23 +91,13 @@ class Trainer(object):
 				g_loss.backward()
 				self.optimizerG.step()
 
-			if i % 100 == 0:
-			vutils.save_image(real_cpu, '%s/real_samples.png' % args.outf, normalize=True)
-			fake = self.discriminator(fixed_noise)
-			vutils.save_image(fake.detach(), '%s/fake_samples_epoch_%03d.png' % (args.outf, epoch), normalize=True)
+				print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f'% (epoch, opt.niter, i, len(dataloader),d_loss,g_loss))
+
+
+				if i % 100 == 0:
+					vutils.save_image(real_cpu, '%s/real_samples.png' % args.outf, normalize=True)
+					fake = self.discriminator(fixed_noise)
+					vutils.save_image(fake.detach(), '%s/fake_samples_epoch_%03d.png' % (args.outf, epoch), normalize=True)
 
 			torch.save(self.generator.state_dict(), '%s/netG_epoch_%d.pth' % (args.outf, epoch))
 			torch.save(self.discriminator.state_dict(), '%s/netD_epoch_%d.pth' % (args.outf, epoch))
-			#if (epoch) % 10 == 0:
-				# save model
-				#Utils.save_checkpoint(self.discriminator, self.generator, self.checkpoints_path, self.save_path, epoch)
-
-
-
-
-
-
-
-
-
-
