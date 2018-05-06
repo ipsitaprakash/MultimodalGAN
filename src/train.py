@@ -56,6 +56,11 @@ class Trainer(object):
 				real_labels = torch.ones(batch_size).to(self.device)
 				fake_labels = torch.zeros(batch_size).to(self.device)
 
+				print("".join(['#']*50))
+				print(right_images.size())
+				print(right_embed.size())
+				print(wrong_images.size())
+
 				##############################################
 
 				self.optimizerD.zero_grad()

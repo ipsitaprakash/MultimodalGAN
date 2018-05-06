@@ -54,7 +54,7 @@ class Generator(nn.Module):
 
 		self.apply(weights_init)
 
-	def forward(self, input):
+	def forward(self, inp,embed):
 
 		# dim of z : 1*128
 		projected_embed = self.projection(embed_vector).unsqueeze(2).unsqueeze(3)
@@ -71,7 +71,8 @@ class Discriminator(nn.Module):
 		self.image_size = args.image_size
 		self.num_channels = 3
 		self.ndf = args.ndf
-
+		self.embed_dim = args.nembedding
+		self.projected_embed_dim = 64
 
 		self.main = nn.Sequential(
 			# input is (nc) x 64 x 64
@@ -90,11 +91,24 @@ class Discriminator(nn.Module):
 			nn.BatchNorm2d(self.ndf * 8),
 			nn.LeakyReLU(0.2, inplace=True),
 			# state size. (self.ndf*8) x 4 x 4
-			nn.Conv2d(self.ndf * 8, 1, 4, 1, 0, bias=False),
-			nn.Sigmoid()
 		)
 
-	def forward(self, input):
-		output = self.main(input)
+		self.projection = nn.Sequential(
+			nn.Linear(in_features=self.embed_dim, out_features=self.projected_embed_dim),
+			nn.BatchNorm1d(num_features=self.projected_embed_dim),
+			nn.LeakyReLU(negative_slope=0.2, inplace=True)
+			)
 
+		self.concat_image_n_text = nn.Sequential(
+			nn.Conv2d(self.ndf * 8 +self.projected_embed_dim, 1, 4, 1, 0, bias=False), ## TODO: Might want to change the kernel size and stride
+            		nn.Sigmoid()
+		)
+
+	def forward(self, inp,embed):
+		encoded_img = self.main(inp)
+		projected_embed = self.projection(embed)
+		replicated_embed = projected_embed.repeat(4, 4, 1, 1).permute(2,  3, 0, 1)
+		hidden_concat = torch.cat([inp, replicated_embed], 1)
+		op = self.concat_image_n_text(hidden_concat)
+			
 		return output.view(-1, 1).squeeze(1)

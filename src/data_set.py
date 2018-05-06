@@ -37,8 +37,8 @@ class Sound2ImageDataset(Dataset):
         #right_image = Image.open(io.BytesIO(right_image)).resize((64, 64))
         #wrong_image = Image.open(io.BytesIO(wrong_image)).resize((64, 64))
 
-        #right_image = self.validate_image(right_image)
-        #wrong_image = self.validate_image(wrong_image)
+        right_image = self.validate_image(right_image)
+        wrong_image = self.validate_image(wrong_image)
 
         #print(right_image.dtype)
 	
@@ -68,7 +68,7 @@ class Sound2ImageDataset(Dataset):
 
 
     def validate_image(self, img):
-        img = np.array(img, dtype=float)
+        #img = np.array(img, dtype=float)
         if len(img.shape) < 3:
             rgb = np.empty((64, 64, 3), dtype=np.float32)
             rgb[:, :, 0] = img
