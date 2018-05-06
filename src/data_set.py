@@ -28,7 +28,6 @@ class Sound2ImageDataset(Dataset):
 
 
         right_image = self.dataset['img'][idx].transpose((1,2,0))
-        print(right_image)
         wrong_image = self.find_wrong_image(self.dataset['class'][idx]).transpose((1,2,0))
         #right_image = bytes(right_image)#bytes(np.array(example['img']))
         right_embed = self.dataset['sound_embeddings'][idx]#np.array(example['embeddings'], dtype=float)
@@ -44,7 +43,7 @@ class Sound2ImageDataset(Dataset):
 	
         sample = {
                 'right_images': torch.from_numpy(right_image.astype(np.float64)),#torch.FloatTensor(right_image),
-                'right_embed': torch.FloatTensor(right_embed),
+                'right_embed': torch.FloatTensor(right_embed).squeeze(0),
                 'wrong_images': torch.from_numpy(wrong_image.astype(np.float64))
                  }
 

@@ -48,7 +48,7 @@ class Trainer(object):
 				right_embed = sample['right_embed']
 				wrong_images = sample['wrong_images']
 				batch_size = right_images.size(0)
-
+				print('Batch size {}'.format(batch_size))
 				right_images = Variable(right_images.float()).to(self.device)
 				right_embed = Variable(right_embed.float()).to(self.device)
 				wrong_images = Variable(wrong_images.float()).to(self.device)
@@ -73,7 +73,7 @@ class Trainer(object):
 				#wrong_loss.backward() 
 
 				noise = Variable(torch.randn(batch_size, args.nz)).to(self.device) 					#CHECK : normal distr
-				noise = noise.view(noise.size(0),noise.size(1), 1, 1) #TODO: dimensions
+				#noise = noise.view(noise.size(0),noise.size(1), 1, 1) #TODO: dimensions
 				fake_images = self.generator(right_embed, noise)
 				fake_score = self.discriminator(fake_images.detach(), right_embed)
 				fake_loss = criterion(outputs, fake_labels) * 0.5

@@ -57,8 +57,11 @@ class Generator(nn.Module):
 	def forward(self, inp,embed):
 
 		# dim of z : 1*128
-		projected_embed = self.projection(embed_vector).unsqueeze(2).unsqueeze(3)
+		print('embed inp (G): {}'.format(embed.size()))
+		projected_embed = self.projection(embed).unsqueeze(2).unsqueeze(3)
+		print('projected embed (G): {}'.format(projected_embed.size()))
 		latent_vector = torch.cat([projected_embed, z], 1)
+		print('latent vector (G): {}'.format(latent_vector.size()))
 		output = self.netG(latent_vector)
 
 		return output
@@ -95,7 +98,7 @@ class Discriminator(nn.Module):
 
 		self.projection = nn.Sequential(
 			nn.Linear(in_features=self.embed_dim, out_features=self.projected_embed_dim),
-			nn.BatchNorm1d(num_features=self.projected_embed_dim),
+			#nn.BatchNorm1d(num_features=self.projected_embed_dim),
 			nn.LeakyReLU(negative_slope=0.2, inplace=True)
 			)
 
@@ -106,9 +109,14 @@ class Discriminator(nn.Module):
 
 	def forward(self, inp,embed):
 		encoded_img = self.main(inp)
+		print('encoded img (D): {}'.format(encoded_img.size()))
 		projected_embed = self.projection(embed)
+		print('projected embed (D): {}'.format(projected_embed.size()))
 		replicated_embed = projected_embed.repeat(4, 4, 1, 1).permute(2,  3, 0, 1)
-		hidden_concat = torch.cat([inp, replicated_embed], 1)
+		print('replicted embed (D): {}'.format(replicated_embed.size()))	
+		hidden_concat = torch.cat([encoded_img, replicated_embed], 1)
 		op = self.concat_image_n_text(hidden_concat)
-			
-		return output.view(-1, 1).squeeze(1)
+		print('output (D): {}'.format(op.size()))	
+		op = op.view(-1, 1).squeeze(1)
+		print('output (D): {}'.format(op.size()))
+		return op
