@@ -21,6 +21,7 @@ parser.add_argument('--workers', type=int, help='number of data loading workers'
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
 parser.add_argument('--image-size', type=int, default=64, help='the height / width of the input image to network')
 parser.add_argument('--nembedding', type=int, default=128, help='the embedding size of sound')
+parser.add_argument('--pembedding', type=int, default=64, help='the embedding size of sound')
 parser.add_argument('--nz', type=int, default=10, help='size of the latent z vector')
 parser.add_argument('--ngf', type=int, default=64)
 parser.add_argument('--ndf', type=int, default=64)
@@ -31,7 +32,7 @@ parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
 parser.add_argument('--netG', default='', help="path to netG (to continue training)")
 parser.add_argument('--netD', default='', help="path to netD (to continue training)")
-parser.add_argument('--outf', default='.', help='folder to output images and model checkpoints')
+parser.add_argument('--outf', default='../out', help='folder to output images and model checkpoints')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 
 args = parser.parse_args()
@@ -63,5 +64,6 @@ args.device = torch.device("cuda:0" if args.cuda else "cpu")
 # custom weights initialization called on netG and netD
 
 dataset = Sound2ImageDataset(args.dataroot)
+print("Number of training instances: {} {} {}".format(len(dataset.dataset['img']),len(dataset.dataset['class']),len(dataset.dataset['sound_embeddings'])))
 trainer = Trainer(dataset,args)
 trainer.train(args)

@@ -19,7 +19,7 @@ class Generator(nn.Module):
 		self.num_channels = 3
 		self.noise_dim = args.nz
 		self.embed_dim = args.nembedding
-		self.projected_embed_dim = 64
+		self.projected_embed_dim = args.pembedding
 		self.latent_dim = self.noise_dim + self.projected_embed_dim
 		self.ngf = 64
 
@@ -54,14 +54,14 @@ class Generator(nn.Module):
 
 		self.apply(weights_init)
 
-	def forward(self, inp,embed):
+	def forward(self,embed,z):
 
 		# dim of z : 1*128
-		print('embed inp (G): {}'.format(embed.size()))
+		#print('embed inp (G): {}'.format(embed.size()))
 		projected_embed = self.projection(embed).unsqueeze(2).unsqueeze(3)
-		print('projected embed (G): {}'.format(projected_embed.size()))
+		#print('projected embed (G): {}'.format(projected_embed.size()))
 		latent_vector = torch.cat([projected_embed, z], 1)
-		print('latent vector (G): {}'.format(latent_vector.size()))
+		#print('latent vector (G): {}'.format(latent_vector.size()))
 		output = self.netG(latent_vector)
 
 		return output
@@ -75,7 +75,7 @@ class Discriminator(nn.Module):
 		self.num_channels = 3
 		self.ndf = args.ndf
 		self.embed_dim = args.nembedding
-		self.projected_embed_dim = 64
+		self.projected_embed_dim = args.pembedding
 
 		self.main = nn.Sequential(
 			# input is (nc) x 64 x 64
@@ -109,14 +109,14 @@ class Discriminator(nn.Module):
 
 	def forward(self, inp,embed):
 		encoded_img = self.main(inp)
-		print('encoded img (D): {}'.format(encoded_img.size()))
+		#print('encoded img (D): {}'.format(encoded_img.size()))
 		projected_embed = self.projection(embed)
-		print('projected embed (D): {}'.format(projected_embed.size()))
+		#print('projected embed (D): {}'.format(projected_embed.size()))
 		replicated_embed = projected_embed.repeat(4, 4, 1, 1).permute(2,  3, 0, 1)
-		print('replicted embed (D): {}'.format(replicated_embed.size()))	
+		#print('replicted embed (D): {}'.format(replicated_embed.size()))	
 		hidden_concat = torch.cat([encoded_img, replicated_embed], 1)
 		op = self.concat_image_n_text(hidden_concat)
-		print('output (D): {}'.format(op.size()))	
+		#print('output (D): {}'.format(op.size()))	
 		op = op.view(-1, 1).squeeze(1)
-		print('output (D): {}'.format(op.size()))
+		#print('output (D): {}'.format(op.size()))
 		return op

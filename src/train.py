@@ -10,7 +10,7 @@ import torch.optim as optim
 import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
-import torchvision.utils as vutil
+import torchvision.utils as vutils
 from models import Generator,Discriminator
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
@@ -39,9 +39,10 @@ class Trainer(object):
 		self.generator.train()
 		self.discriminator.train()
 
+		fixed_noise = torch.randn(args.batchSize, args.nz, 1, 1, device=self.device)
+
 		for epoch in range(args.nepochs):
 
-			fixed_noise = torch.randn(args.batchSize, args.nz, 1, 1, device=self.device)
 			for i, sample in enumerate(self.dataloader):
 
 				right_images = sample['right_images']
@@ -57,9 +58,9 @@ class Trainer(object):
 				fake_labels = torch.zeros(batch_size).to(self.device)
 
 				print("".join(['#']*50))
-				print(right_images.size())
-				print(right_embed.size())
-				print(wrong_images.size())
+				#print("Right img :{}".format(right_images.size()))
+				#print("Right embed : {}".format(right_embed.size()))
+				#print("Wrong image: {}".format(wrong_images.size()))
 
 				##############################################
 
@@ -73,10 +74,10 @@ class Trainer(object):
 				#wrong_loss.backward() 
 
 				noise = Variable(torch.randn(batch_size, args.nz)).to(self.device) 					#CHECK : normal distr
-				#noise = noise.view(noise.size(0),noise.size(1), 1, 1) #TODO: dimensions
+				noise = noise.view(noise.size(0),noise.size(1), 1, 1) #TODO: dimensions
 				fake_images = self.generator(right_embed, noise)
 				fake_score = self.discriminator(fake_images.detach(), right_embed)
-				fake_loss = criterion(outputs, fake_labels) * 0.5
+				fake_loss = self.criterion(fake_score, fake_labels) * 0.5
 				#fake_loss.backward()
 
 				d_loss = real_loss + fake_loss + wrong_loss
@@ -86,7 +87,7 @@ class Trainer(object):
 				########################################################
 
 				self.optimizerG.zero_grad()
-				g_real_labels = torch.ones(batch_size).to(device)
+				g_real_labels = torch.ones(batch_size).to(self.device)
 				noise = Variable(torch.randn(batch_size, args.nz)).to(self.device) 					#CHECK : normal distr
 				noise = noise.view(noise.size(0),noise.size(1), 1, 1) #TODO: dimensions
 				
@@ -96,12 +97,12 @@ class Trainer(object):
 				g_loss.backward()
 				self.optimizerG.step()
 
-				print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f'% (epoch, opt.niter, i, len(dataloader),d_loss,g_loss))
+				print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f'% (epoch, args.nepochs, i, len(self.dataloader),d_loss,g_loss))
 
 
 				if i % 100 == 0:
-					vutils.save_image(real_cpu, '%s/real_samples.png' % args.outf, normalize=True)
-					fake = self.discriminator(fixed_noise)
+					vutils.save_image(right_images, '%s/real_samples.png' % args.outf, normalize=True)
+					fake = self.generator(right_embed,fixed_noise)
 					vutils.save_image(fake.detach(), '%s/fake_samples_epoch_%03d.png' % (args.outf, epoch), normalize=True)
 
 			torch.save(self.generator.state_dict(), '%s/netG_epoch_%d.pth' % (args.outf, epoch))

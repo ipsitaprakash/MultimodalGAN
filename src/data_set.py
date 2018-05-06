@@ -19,7 +19,7 @@ class Sound2ImageDataset(Dataset):
         #self. = lambda x: int(np.array(x))
 
     def __len__(self):
-        return len(self.dataset_keys)
+        return len(self.dataset['class'])
 
     def __getitem__(self, idx):
         # pdb.set_trace()
