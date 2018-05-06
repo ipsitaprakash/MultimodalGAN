@@ -6,7 +6,6 @@ import pdb
 from PIL import Image
 import torch
 from torch.autograd import Variable
-import pdb
 import torch.nn.functional as F
 import h5py
 
@@ -24,23 +23,29 @@ class Sound2ImageDataset(Dataset):
 
     def __getitem__(self, idx):
         # pdb.set_trace()
-        example_name = self.dataset_keys[idx]
-        example = self.dataset[example_name]
+        #example_name = self.dataset_keys[idx]
+        #example = self.dataset[example_name]
 
-        right_image = bytes(self.dataset['img'][idx])#bytes(np.array(example['img']))
-        right_embed = self.dataset['embeddings'][idx]#np.array(example['embeddings'], dtype=float)
-        wrong_image = bytes(self.dataset['class'][idx])#bytes(np.array(self.find_wrong_image(example['class'])))
 
-        right_image = Image.open(io.BytesIO(right_image)).resize((64, 64))
-        wrong_image = Image.open(io.BytesIO(wrong_image)).resize((64, 64))
+        right_image = self.dataset['img'][idx].transpose((1,2,0))
+        print(right_image)
+        wrong_image = self.find_wrong_image(self.dataset['class'][idx]).transpose((1,2,0))
+        #right_image = bytes(right_image)#bytes(np.array(example['img']))
+        right_embed = self.dataset['sound_embeddings'][idx]#np.array(example['embeddings'], dtype=float)
+        #wrong_image = bytes(self.dataset['class'][idx])#bytes(np.array(self.find_wrong_image(example['class'])))
 
-        right_image = self.validate_image(right_image)
-        wrong_image = self.validate_image(wrong_image)
+        #right_image = Image.open(io.BytesIO(right_image)).resize((64, 64))
+        #wrong_image = Image.open(io.BytesIO(wrong_image)).resize((64, 64))
 
+        #right_image = self.validate_image(right_image)
+        #wrong_image = self.validate_image(wrong_image)
+
+        #print(right_image.dtype)
+	
         sample = {
-                'right_images': torch.FloatTensor(right_image),
+                'right_images': torch.from_numpy(right_image.astype(np.float64)),#torch.FloatTensor(right_image),
                 'right_embed': torch.FloatTensor(right_embed),
-                'wrong_images': torch.FloatTensor(wrong_image)
+                'wrong_images': torch.from_numpy(wrong_image.astype(np.float64))
                  }
 
         sample['right_images'] = sample['right_images']     #TODO : .sub_(127.5).div_(127.5)
@@ -49,13 +54,15 @@ class Sound2ImageDataset(Dataset):
         return sample
 
     def find_wrong_image(self, category):
-        idx = np.random.randint(len(self.dataset_keys))
-        example_name = self.dataset_keys[idx]
-        example = self.dataset[example_name]
-        _category = example['class']
+        #print(self.dataset_keys['class'])
+        #print(self.dataset_keys['class'].shape)
+        idx = np.random.randint(len(self.dataset['class']))
+        #example_name = self.dataset_keys[idx]
+        example = self.dataset['img'][idx]
+        _category = self.dataset['class'][idx]
 
         if _category != category:
-            return example['img']
+            return example
 
         return self.find_wrong_image(category)
 

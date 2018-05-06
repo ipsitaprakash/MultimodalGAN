@@ -13,7 +13,7 @@ import torchvision.transforms as transforms
 import torchvision.utils as vutil
 from models import Generator,Discriminator
 from torch.utils.data import DataLoader
-
+from torch.autograd import Variable
 
 
 class Trainer(object):
@@ -44,17 +44,17 @@ class Trainer(object):
 			fixed_noise = torch.randn(args.batchSize, args.nz, 1, 1, device=self.device)
 			for i, sample in enumerate(self.dataloader):
 
-				batch_size = right_images.size(0)
 				right_images = sample['right_images']
 				right_embed = sample['right_embed']
 				wrong_images = sample['wrong_images']
+				batch_size = right_images.size(0)
 
 				right_images = Variable(right_images.float()).to(self.device)
 				right_embed = Variable(right_embed.float()).to(self.device)
 				wrong_images = Variable(wrong_images.float()).to(self.device)
 
-				real_labels = torch.ones(batch_size).to(device)
-				fake_labels = torch.zeros(batch_size).to(device)
+				real_labels = torch.ones(batch_size).to(self.device)
+				fake_labels = torch.zeros(batch_size).to(self.device)
 
 				##############################################
 
