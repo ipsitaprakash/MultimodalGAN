@@ -24,7 +24,7 @@ class Trainer(object):
 		self.device = args.device
 
 		self.generator = torch.nn.DataParallel(Generator(args).to(args.device))
-		self.discriminator = torch.nn.DataParallel(Discriminator(args).to(args.device))
+		self.discriminator = torch.nn.DataParallel(Discriminator(args).to(args.device))				
 
 		self.dataloader = DataLoader(dataset, batch_size=args.batchSize,shuffle=True, num_workers=int(args.workers))
 		self.optimizerD = optim.Adam(self.discriminator.parameters(), lr=args.lr, betas=(args.beta1, 0.999))

@@ -34,6 +34,7 @@ parser.add_argument('--netG', default='', help="path to netG (to continue traini
 parser.add_argument('--netD', default='', help="path to netD (to continue training)")
 parser.add_argument('--outf', default='../out', help='folder to output images and model checkpoints')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
+#parser.add_argument('--modelPath',default='',help='load model from path')
 
 args = parser.parse_args()
 print(args)

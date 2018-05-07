@@ -106,6 +106,7 @@ class Discriminator(nn.Module):
 			nn.Conv2d(self.ndf * 8 +self.projected_embed_dim, 1, 4, 1, 0, bias=False), ## TODO: Might want to change the kernel size and stride
             		nn.Sigmoid()
 		)
+		self.apply(weights_init)
 
 	def forward(self, inp,embed):
 		encoded_img = self.main(inp)
