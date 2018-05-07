@@ -98,7 +98,7 @@ class Discriminator(nn.Module):
 
 		self.projection = nn.Sequential(
 			nn.Linear(in_features=self.embed_dim, out_features=self.projected_embed_dim),
-			#nn.BatchNorm1d(num_features=self.projected_embed_dim),
+			nn.BatchNorm1d(num_features=self.projected_embed_dim),
 			nn.LeakyReLU(negative_slope=0.2, inplace=True)
 			)
 
