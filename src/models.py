@@ -53,6 +53,8 @@ class Generator(nn.Module):
 			)
 
 		self.apply(weights_init)
+		if args.netG!='':
+			self.load_state_dict(torch.load(args.netG))
 
 	def forward(self,embed,z):
 
@@ -107,6 +109,8 @@ class Discriminator(nn.Module):
             		nn.Sigmoid()
 		)
 		self.apply(weights_init)
+		if args.netD !='':
+			self.load_state_dict(torch.load(args.netD))
 
 	def forward(self, inp,embed):
 		encoded_img = self.main(inp)
