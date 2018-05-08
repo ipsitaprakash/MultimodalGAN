@@ -13,7 +13,8 @@ import torchvision.utils as vutils
 
 
 from data_set import Sound2ImageDataset
-from train import Trainer
+from train import Trainer,WGANTrainer
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataroot', default='../data/test.h5', help='path to dataset')
@@ -33,7 +34,9 @@ parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
 parser.add_argument('--netG', default='', help="path to netG (to continue training)")
 parser.add_argument('--netD', default='', help="path to netD (to continue training)")
 parser.add_argument('--outf', default='../out', help='folder to output images and model checkpoints')
+parser.add_argument('--penalty-wt', type=float,default=20., help='penalty weight')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
+parser.add_argument('--wgan',action='store_true',default=False,help='use wgan')
 #parser.add_argument('--modelPath',default='',help='load model from path')
 
 args = parser.parse_args()
@@ -66,5 +69,8 @@ args.device = torch.device("cuda:0" if args.cuda else "cpu")
 
 dataset = Sound2ImageDataset(args.dataroot)
 print("Number of training instances: {} {} {}".format(len(dataset.dataset['img']),len(dataset.dataset['class']),len(dataset.dataset['sound_embeddings'])))
-trainer = Trainer(dataset,args)
+if args.wgan:
+    trainer = Trainer(dataset,args)
+else:
+    trainer = WGANTrainer(dataset,args)
 trainer.train(args)
