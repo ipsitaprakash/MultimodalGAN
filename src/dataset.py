@@ -42,12 +42,12 @@ class Sound2ImageDataset(Dataset):
         sample = {
                 'right_images': torch.FloatTensor(right_image),
                 'right_embed': torch.FloatTensor(right_embed),
-                'wrong_images': torch.FloatTensor(wrong_image)
+                'wrong_images': torch.FloatTensor(wrong_image),
+		'class': self.dataset['class'][idx]
                  }
 
         sample['right_images'] = sample['right_images']     #TODO : .sub_(127.5).div_(127.5)
         sample['wrong_images'] =sample['wrong_images']      #TODO : .sub_(127.5).div_(127.5)
-
         return sample
 
     def find_wrong_image(self, category):

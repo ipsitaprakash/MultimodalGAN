@@ -44,7 +44,8 @@ class Sound2ImageDataset(Dataset):
         sample = {
                 'right_images': torch.from_numpy(right_image.astype(np.float64)),#torch.FloatTensor(right_image),
                 'right_embed': torch.FloatTensor(right_embed).squeeze(0),
-                'wrong_images': torch.from_numpy(wrong_image.astype(np.float64))
+                'wrong_images': torch.from_numpy(wrong_image.astype(np.float64)),
+                'class': self.dataset['class'][idx]
                  }
 
         sample['right_images'] = sample['right_images']     #TODO : .sub_(127.5).div_(127.5)
@@ -76,3 +77,22 @@ class Sound2ImageDataset(Dataset):
             img = rgb
 
         return img.transpose(2, 0, 1)
+
+class EvalDataset(Dataset):
+    def __init__(self, datasetFile):
+        self.datasetFile = datasetFile
+        self.dataset = h5py.File(self.datasetFile, mode='r')
+        self.dataset_keys = [str(k) for k in self.dataset.keys()]
+
+    def __len__(self):
+        return len(self.dataset['class'])
+
+    def __getitem__(self, idx):
+
+        right_embed = self.dataset['sound_embeddings'][idx]
+
+        sample = {
+                'right_embed': torch.FloatTensor(right_embed).squeeze(0),
+                'class': self.dataset['class'][idx]
+                 }
+        return sample

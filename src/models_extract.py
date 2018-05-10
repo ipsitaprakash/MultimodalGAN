@@ -33,19 +33,19 @@ class Generator(nn.Module):
 		self.netG = nn.Sequential(
 			nn.ConvTranspose2d(self.latent_dim, self.ngf * 8, 4, 1, 0, bias=False),
 			nn.BatchNorm2d(self.ngf * 8),
-			nn.LeakyReLU(0.2, inplace=True),
+			nn.ReLU(True),
 			# state size. (ngf*8) x 4 x 4
 			nn.ConvTranspose2d(self.ngf * 8, self.ngf * 4, 4, 2, 1, bias=False),
 			nn.BatchNorm2d(self.ngf * 4),
-			nn.LeakyReLU(0.2, inplace=True),
+			nn.ReLU(True),
 			# state size. (ngf*4) x 8 x 8
 			nn.ConvTranspose2d(self.ngf * 4, self.ngf * 2, 4, 2, 1, bias=False),
 			nn.BatchNorm2d(self.ngf * 2),
-			nn.LeakyReLU(0.2, inplace=True),
+			nn.ReLU(True),
 			# state size. (ngf*2) x 16 x 16
 			nn.ConvTranspose2d(self.ngf * 2,self.ngf, 4, 2, 1, bias=False),
 			nn.BatchNorm2d(self.ngf),
-			nn.LeakyReLU(0.2, inplace=True),
+			nn.ReLU(True),
 			# state size. (ngf) x 32 x 32
 			nn.ConvTranspose2d(self.ngf, self.num_channels, 4, 2, 1, bias=False),
 			nn.Tanh()
@@ -53,17 +53,15 @@ class Generator(nn.Module):
 			)
 
 		self.apply(weights_init)
-		"""
 		if args.netG!='':
 			self.load_state_dict(torch.load(args.netG))
-		"""
+
 	def forward(self,embed,z):
 
 		# dim of z : 1*128
-		print(z.size())
 		#print('embed inp (G): {}'.format(embed.size()))
 		projected_embed = self.projection(embed).unsqueeze(2).unsqueeze(3)
-		print('projected embed (G): {}'.format(projected_embed.size()))
+		#print('projected embed (G): {}'.format(projected_embed.size()))
 		latent_vector = torch.cat([projected_embed, z], 1)
 		#print('latent vector (G): {}'.format(latent_vector.size()))
 		output = self.netG(latent_vector)
@@ -111,10 +109,8 @@ class Discriminator(nn.Module):
             		nn.Sigmoid()
 		)
 		self.apply(weights_init)
-		"""
 		if args.netD !='':
 			self.load_state_dict(torch.load(args.netD))
-		"""
 
 	def forward(self, inp,embed):
 		encoded_img = self.main(inp)

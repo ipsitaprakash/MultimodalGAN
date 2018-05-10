@@ -14,7 +14,7 @@ import torchvision.utils as vutils
 from models import Generator,Discriminator
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
-
+from data_set import *
 from loss import *
 
 
@@ -41,7 +41,7 @@ class Trainer(object):
 		self.generator.train()
 		self.discriminator.train()
 
-		fixed_noise = torch.randn(args.batchSize, args.nz, 1, 1, device=self.device)
+		fixed_noise = torch.randn(args.batchSize, args.nz, 1, 1, device=self.device).normal_()
 
 		for epoch in range(args.nepochs):
 
@@ -75,7 +75,7 @@ class Trainer(object):
 				wrong_loss = self.criterion(wrong_score,fake_labels)*0.5
 				#wrong_loss.backward() 
 
-				noise = Variable(torch.randn(batch_size, args.nz)).to(self.device) 					#CHECK : normal distr
+				noise = Variable(torch.randn(batch_size, args.nz).normal_()).to(self.device) 					#CHECK : normal distr
 				noise = noise.view(noise.size(0),noise.size(1), 1, 1) #TODO: dimensions
 				fake_images = self.generator(right_embed, noise)
 				fake_score = self.discriminator(fake_images.detach(), right_embed)
@@ -103,13 +103,27 @@ class Trainer(object):
 
 
 				if i % 100 == 0:
-					vutils.save_image(right_images, '%s/real_samples.png' % args.outf, normalize=True)
+					vutils.save_image(right_images, '%s/real_samples_epoch_%03d.png' % (args.outf,epoch), normalize=True)
 					fake = self.generator(right_embed,fixed_noise)
 					vutils.save_image(fake.detach(), '%s/fake_samples_epoch_%03d.png' % (args.outf, epoch), normalize=True)
 
 			torch.save(self.generator.state_dict(), '%s/netG_epoch_%d.pth' % (args.outf, epoch))
 			torch.save(self.discriminator.state_dict(), '%s/netD_epoch_%d.pth' % (args.outf, epoch))
 
+	def eval(self,ds,args):
+                self.generator.eval()
+
+                data_loader = DataLoader(ds, batch_size=args.batchSize,shuffle=False, num_workers=int(args.workers))
+
+                for i,sample in enumerate(data_loader):
+                        right_embed = sample['right_embed']
+                        right_embed = Variable(right_embed.float()).to(self.device)
+                        batch_size = right_embed.size(0)
+                        noise = Variable(torch.randn(batch_size, args.nz)).normal_().to(self.device)
+                        noise = noise.view(noise.size(0),noise.size(1), 1, 1)                        
+                        generated_images = self.generator(right_embed, noise)
+
+                        vutils.save_image(generated_images.detach(), '%s/fake_samples_eval.png' % (args.outf), normalize=True)
 
 class WGANTrainer(object):
 
@@ -165,13 +179,13 @@ class WGANTrainer(object):
 				wrong_score = self.discriminator(wrong_images, right_embed) 
 				#wrong_loss.backward() 
 
-				noise = Variable(torch.randn(batch_size, args.nz)).normal(0,).to(self.device) 					#CHECK : normal distr
+				noise = Variable(torch.randn(batch_size, args.nz)).normal_().to(self.device) 					#CHECK : normal distr
 				noise = noise.view(noise.size(0),noise.size(1), 1, 1) #TODO: dimensions
 				fake_images = self.generator(right_embed, noise)
 				fake_score = self.discriminator(fake_images.detach(), right_embed)
 				#fake_loss.backward()
 
-				d_loss = self.disc_criterion(right_images,wrong_images,real_score,wrong_score,fake_score)
+				d_loss = self.disc_criterion(right_images,wrong_images,fake_images,real_score,wrong_score,fake_score,right_embed)
 				d_loss.backward()
 				self.optimizerD.step()
 
@@ -184,7 +198,7 @@ class WGANTrainer(object):
 				
 				generated_images = self.generator(right_embed, noise)
 				fake_score = self.discriminator(generated_images,right_embed)
-				g_loss = self.gen_criterion(fake_score,g_real_labels)
+				g_loss = self.gen_criterion(fake_score)
 				g_loss.backward()
 				self.optimizerG.step()
 
@@ -198,3 +212,18 @@ class WGANTrainer(object):
 
 			torch.save(self.generator.state_dict(), '%s/netG_epoch_%d.pth' % (args.outf, epoch))
 			torch.save(self.discriminator.state_dict(), '%s/netD_epoch_%d.pth' % (args.outf, epoch))
+
+	def eval(self,ds,args):
+		self.generator.eval()
+
+		data_loader = DataLoader(ds, batch_size=args.batchSize,shuffle=False, num_workers=int(args.workers))
+		noise = Variable(torch.randn(batch_size, args.nz)).normal().to(self.device) 
+
+		for i,sample in enumerate(data_loader):
+			right_embed = sample['right_embed']
+			right_embed = Variable(right_embed.float()).to(self.device)
+			noise = noise.view(noise.size(0),noise.size(1), 1, 1)
+			generated_images = self.generator(right_embed, noise)
+
+			vutils.save_image(generated_images.detach(), '%s/fake_samples_eval.png' % (args.outf), normalize=True)
+	
